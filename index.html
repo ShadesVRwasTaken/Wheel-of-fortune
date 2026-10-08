@@ -3,295 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sleek Wheel Spinner</title>
-    <style>
-        :root {
-            --bg-gradient: linear-gradient(135deg, #0f172a, #1e1b4b);
-            --panel-bg: rgba(30, 41, 59, 0.7);
-            --accent: #6366f1;
-            --accent-hover: #4f46e5;
-            --text-main: #f8fafc;
-            --border: rgba(255, 255, 255, 0.1);
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', system-ui, sans-serif;
-        }
-
-        body {
-            background: var(--bg-gradient);
-            color: var(--text-main);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        h1 {
-            margin-bottom: 2rem;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-            text-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        }
-
-        .container {
-            display: flex;
-            background: var(--panel-bg);
-            backdrop-filter: blur(12px);
-            border: 1px solid var(--border);
-            border-radius: 24px;
-            padding: 2.5rem;
-            gap: 3.5rem;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            max-width: 900px;
-            width: 100%;
-            align-items: center;
-        }
-
-        /* Wheel Container Layout */
-        .wheel-section {
-            position: relative;
-            width: 340px;
-            height: 340px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        /* The Indicator Pointer Needle */
-        .pointer {
-            position: absolute;
-            top: -18px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 0;
-            height: 0;
-            border-left: 16px solid transparent;
-            border-right: 16px solid transparent;
-            border-top: 28px solid #ef4444;
-            z-index: 10;
-            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3));
-        }
-
-        /* The Visual Wheel Graphic */
-        #wheel {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            border: 8px solid #ffffff;
-            /* Smooth conic-gradient loop for wheel segments */
-            background: conic-gradient(
-                #f43f5e 0% 12.5%, #3b82f6 12.5% 25%, 
-                #10b981 25% 37.5%, #eab308 37.5% 50%, 
-                #8b5cf6 50% 62.5%, #ec4899 62.5% 75%, 
-                #14b8a6 75% 87.5%, #f97316 87.5% 100%
-            );
-            box-shadow: 0 10px 25px rgba(0,0,0,0.4), inset 0 0 40px rgba(0,0,0,0.3);
-            transition: transform 4s cubic-bezier(0.1, 1, 0.1, 1);
-        }
-
-        /* The Center Metallic Peg Hub */
-        .center-hub {
-            position: absolute;
-            width: 40px;
-            height: 40px;
-            background: white;
-            border-radius: 50%;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            z-index: 5;
-        }
-
-        /* Controls Section Layout */
-        .controls-section {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 1.2rem;
-        }
-
-        textarea {
-            width: 100%;
-            height: 180px;
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            color: #fff;
-            padding: 1rem;
-            font-size: 1rem;
-            resize: none;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-
-        textarea:focus {
-            border-color: var(--accent);
-        }
-
-        .btn {
-            background: var(--accent);
-            color: white;
-            border: none;
-            padding: 0.9rem;
-            border-radius: 12px;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-        }
-
-        .btn:hover {
-            background: var(--accent-hover);
-            transform: translateY(-1px);
-        }
-
-        .btn:active {
-            transform: translateY(1px);
-        }
-
-        /* Custom In-Page Winner Modal Window */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(15, 23, 42, 0.75);
-            backdrop-filter: blur(6px);
-            z-index: 100;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal-card {
-            background: #1e293b;
-            border: 1px solid var(--border);
-            padding: 2.5rem;
-            border-radius: 20px;
-            text-align: center;
-            max-width: 420px;
-            width: 90%;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
-            animation: modalPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        @keyframes modalPop {
-            0% { transform: scale(0.7); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-
-        .modal-card h2 {
-            font-size: 1.2rem;
-            color: #94a3b8;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 0.5rem;
-        }
-
-        .winner-text {
-            font-size: 2.8rem;
-            font-weight: 800;
-            color: #f59e0b;
-            margin-bottom: 1.5rem;
-            word-wrap: break-word;
-            text-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                flex-direction: column;
-                padding: 1.5rem;
-                gap: 2rem;
-            }
-            .wheel-section {
-                width: 280px;
-                height: 280px;
-            }
-        }
-    </style>
+    <title>Green & Black Custom Wheel Spinner</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <h1>🎯 Lucky Wheel Picker</h1>
-
-    <div class="container">
-        <!-- Interactive Wheel Component Section -->
-        <div class="wheel-section">
-            <div class="pointer"></div>
-            <div id="wheel"></div>
-            <div class="center-hub"></div>
+    <header>
+        <div class="tabs">
+            <button class="tab-btn active" id="tabWheel">🎮 Wheel Config</button>
+            <button class="tab-btn" id="tabPrize">💰 Prize Pool</button>
         </div>
+    </header>
 
-        <!-- Inputs and Controls Component Section -->
-        <div class="controls-section">
-            <textarea id="namesList" placeholder="Enter entries here...">Alice&#10;Bob&#10;Charlie&#10;David&#10;Emma&#10;Frank&#10;Grace</textarea>
-            <button class="btn" id="spinButton">Spin Wheel</button>
+    <!-- TAB 1: WHEEL SPINNER VIEW -->
+    <div id="wheel-tab" class="tab-view active">
+        <div class="container">
+            <div class="wheel-section">
+                <div class="pointer"></div>
+                <canvas id="wheelCanvas" width="500" height="500"></canvas>
+                <div class="center-hub"></div>
+            </div>
+
+            <div class="controls-section">
+                <div class="input-group">
+                    <input type="text" id="newNameInput" placeholder="Enter single name...">
+                    <button class="btn" id="addNameBtn">+ Name</button>
+                </div>
+                
+                <textarea id="namesTextarea" readonly placeholder="No names added yet..."></textarea>
+                <button class="btn btn-spin" id="spinBtn">Spin Wheel</button>
+            </div>
         </div>
     </div>
 
-    <!-- Clean In-Page Custom Modal Overlay Window -->
+    <!-- TAB 2: PRIZE POOL MATRIX DATA VIEW -->
+    <div id="prize-tab" class="tab-view">
+        <div class="pool-card">
+            <h2>Financial Breakdown Dashboard</h2>
+            <div class="pool-grid">
+                <div class="pool-stat">
+                    <h3>Total Earnings</h3>
+                    <div class="pool-value" id="totalEarningsDisplay">$0.00</div>
+                </div>
+                <div class="pool-stat">
+                    <h3>Prize Pool (50%)</h3>
+                    <div class="pool-value" id="prizePoolDisplay">$0.00</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- IN-PAGE MODAL WINDOW -->
     <div class="modal-overlay" id="resultModal">
         <div class="modal-card">
-            <h2>We Have A Winner!</h2>
+            <h2>Selected Segment</h2>
             <div class="winner-text" id="winnerText"></div>
-            <button class="btn" style="width: 100%;" id="closeModal">Continue</button>
+            <button class="btn" style="width: 100%; color: #000;" id="closeModal">Dismiss</button>
         </div>
     </div>
 
-    <script>
-        const wheel = document.getElementById('wheel');
-        const spinButton = document.getElementById('spinButton');
-        const namesList = document.getElementById('namesList');
-        const resultModal = document.getElementById('resultModal');
-        const winnerText = document.getElementById('winnerText');
-        const closeModal = document.getElementById('closeModal');
-
-        let currentRotation = 0;
-        let isSpinning = false;
-
-        spinButton.addEventListener('click', () => {
-            if (isSpinning) return;
-
-            // Parse text lines cleanly
-            const names = namesList.value.split('\n').map(name => name.trim()).filter(name => name !== "");
-
-            if (names.length === 0) {
-                winnerText.textContent = "No entries found!";
-                resultModal.style.display = 'flex';
-                return;
-            }
-
-            isSpinning = true;
-
-            // Choose winner immediately via index array
-            const randomIndex = Math.floor(Math.random() * names.length);
-            const winner = names[randomIndex];
-
-            // Spin math: minimum 5 full rotations + randomized slice angle offset
-            const addedDegrees = 1800 + Math.floor(Math.random() * 360);
-            currentRotation += addedDegrees;
-
-            // Trigger the CSS hardware accelerated animation transition rule
-            wheel.style.transform = `rotate(${currentRotation}deg)`;
-
-            // Wait exactly 4 seconds (matching CSS transition rules timeline) then unveil modal card
-            setTimeout(() => {
-                winnerText.textContent = winner;
-                resultModal.style.display = 'flex';
-                isSpinning = false;
-            }, 4000);
-        });
-
-        // Close the modal cleanly in-page on action hook click
-        closeModal.addEventListener('click', () => {
-            resultModal.style.display = 'none';
-        });
-    </script>
+    <!-- Scripts at the bottom -->
+    <script src="financials.js"></script>
+    <script src="app.js"></script>
 </body>
 </html>
