@@ -8,9 +8,11 @@ const resultModal = document.getElementById('resultModal');
 const winnerText = document.getElementById('winnerText');
 const closeModal = document.getElementById('closeModal');
 
-let names = ["Alice", "Bob", "Charlie", "David"]; 
+// FIX 1: Changed from default array names to an empty list on startup
+let names = []; 
 let currentRotationAngle = 0;
 let isSpinning = false;
+let lastWinnerIndex = -1; // Tracks the most recent winner for removal
 
 const wheelColors = ['#16a34a', '#000000', '#22c55e', '#171717'];
 
@@ -30,6 +32,12 @@ function drawWheel() {
         ctx.arc(center, center, radius, 0, 2 * Math.PI);
         ctx.fillStyle = '#171717';
         ctx.fill();
+        
+        // Show helpful hint text when empty
+        ctx.fillStyle = '#64748b';
+        ctx.font = '16px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Add a name to generate the wheel', center, center);
         return;
     }
 
@@ -85,10 +93,10 @@ spinBtn.addEventListener('click', () => {
     isSpinning = true;
 
     const totalSlices = names.length;
-    const targetWinnerIndex = Math.floor(Math.random() * totalSlices);
+    lastWinnerIndex = Math.floor(Math.random() * totalSlices);
     const sliceSizeRad = (2 * Math.PI) / totalSlices;
     
-    const targetAngleOffset = (3 * Math.PI / 2) - (targetWinnerIndex * sliceSizeRad) - (sliceSizeRad / 2);
+    const targetAngleOffset = (3 * Math.PI / 2) - (lastWinnerIndex * sliceSizeRad) - (sliceSizeRad / 2);
     const finalDestinationAngle = (Math.PI * 2 * 6) + targetAngleOffset;
 
     let startTimestamp = null;
@@ -107,13 +115,22 @@ spinBtn.addEventListener('click', () => {
             requestAnimationFrame(animateWheel);
         } else {
             isSpinning = false;
-            winnerText.textContent = names[targetWinnerIndex];
+            winnerText.textContent = names[lastWinnerIndex];
             resultModal.style.display = 'flex';
         }
     }
     requestAnimationFrame(animateWheel);
 });
 
-closeModal.addEventListener('click', () => { resultModal.style.display = 'none'; });
+// FIX 2: Modified the close modal listener to act as a "Remove Name" tool
+closeModal.addEventListener('click', () => {
+    if (lastWinnerIndex > -1 && lastWinnerIndex < names.length) {
+        // Splice removes exactly 1 element at the winner index position from array tracking
+        names.splice(lastWinnerIndex, 1);
+        syncTextarea();
+    }
+    resultModal.style.display = 'none';
+    lastWinnerIndex = -1; // Reset tracking pointer index
+});
 
 syncTextarea();
