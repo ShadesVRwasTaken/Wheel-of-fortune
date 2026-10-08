@@ -2,23 +2,55 @@ const canvas = document.getElementById('wheelCanvas');
 const ctx = canvas.getContext('2d');
 const newNameInput = document.getElementById('newNameInput');
 const addNameBtn = document.getElementById('addNameBtn');
-const namesTextarea = document.getElementById('namesTextarea');
+const namesContainer = document.getElementById('namesContainer');
 const spinBtn = document.getElementById('spinBtn');
 const resultModal = document.getElementById('resultModal');
 const winnerText = document.getElementById('winnerText');
 const closeModal = document.getElementById('closeModal');
 
-// FIX 1: Changed from default array names to an empty list on startup
+// HARD RESET: Starting with a completely empty array. No default names.
 let names = []; 
 let currentRotationAngle = 0;
 let isSpinning = false;
-let lastWinnerIndex = -1; // Tracks the most recent winner for removal
+let lastWinnerIndex = -1;
 
 const wheelColors = ['#16a34a', '#000000', '#22c55e', '#171717'];
 
-function syncTextarea() {
-    namesTextarea.value = names.join('\n');
+// Renders the interactive sidebar list with manual "X" delete buttons
+function syncNamesList() {
+    namesContainer.innerHTML = '';
+    
+    if (names.length === 0) {
+        namesContainer.innerHTML = '<div style="color: #64748b; padding: 10px; text-align: center; font-size: 0.9rem;">No names added yet.</div>';
+    }
+
+    names.forEach((name, index) => {
+        const item = document.createElement('div');
+        item.className = 'name-item';
+        item.innerHTML = `
+            <span>${name}</span>
+            <button class="remove-btn" data-index="${index}">✕</button>
+        `;
+        namesContainer.appendChild(item);
+    });
+
+    // Add click listeners directly to the "✕" buttons for manual removal before spinning
+    document.querySelectorAll('.remove-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const idxToRemove = parseInt(e.target.getAttribute('data-index'));
+            removeNameAt(idxToRemove);
+        });
+    });
+
     drawWheel();
+}
+
+// Function to handle removing a name at any specific index position
+function removeNameAt(index) {
+    if (index > -1 && index < names.length) {
+        names.splice(index, 1);
+        syncNamesList();
+    }
 }
 
 function drawWheel() {
@@ -33,7 +65,6 @@ function drawWheel() {
         ctx.fillStyle = '#171717';
         ctx.fill();
         
-        // Show helpful hint text when empty
         ctx.fillStyle = '#64748b';
         ctx.font = '16px sans-serif';
         ctx.textAlign = 'center';
@@ -79,7 +110,7 @@ addNameBtn.addEventListener('click', () => {
     if (textValue) {
         names.push(textValue);
         newNameInput.value = '';
-        syncTextarea();
+        syncNamesList();
         if (typeof updateEarnings === 'function') updateEarnings(0.50);
     }
 });
@@ -122,15 +153,15 @@ spinBtn.addEventListener('click', () => {
     requestAnimationFrame(animateWheel);
 });
 
-// FIX 2: Modified the close modal listener to act as a "Remove Name" tool
+// Close popup modal window and clean out the winner
 closeModal.addEventListener('click', () => {
     if (lastWinnerIndex > -1 && lastWinnerIndex < names.length) {
-        // Splice removes exactly 1 element at the winner index position from array tracking
         names.splice(lastWinnerIndex, 1);
-        syncTextarea();
+        syncNamesList();
     }
     resultModal.style.display = 'none';
-    lastWinnerIndex = -1; // Reset tracking pointer index
+    lastWinnerIndex = -1; 
 });
 
-syncTextarea();
+// Initial bootstrapper call
+syncNamesList();
