@@ -8,7 +8,7 @@ const resultModal = document.getElementById('resultModal');
 const winnerText = document.getElementById('winnerText');
 const closeModal = document.getElementById('closeModal');
 
-// HARD RESET: Starting with a completely empty array. No default names.
+// Verified hard-reset state array workspace
 let names = []; 
 let currentRotationAngle = 0;
 let isSpinning = false;
@@ -16,7 +16,6 @@ let lastWinnerIndex = -1;
 
 const wheelColors = ['#16a34a', '#000000', '#22c55e', '#171717'];
 
-// Renders the interactive sidebar list with manual "X" delete buttons
 function syncNamesList() {
     namesContainer.innerHTML = '';
     
@@ -34,7 +33,6 @@ function syncNamesList() {
         namesContainer.appendChild(item);
     });
 
-    // Add click listeners directly to the "✕" buttons for manual removal before spinning
     document.querySelectorAll('.remove-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const idxToRemove = parseInt(e.target.getAttribute('data-index'));
@@ -42,10 +40,14 @@ function syncNamesList() {
         });
     });
 
+    // Simultaneously updates mathematical profiles tracking on Tab 2 data sets
+    if (typeof updateOddsTable === 'function') {
+        updateOddsTable(names, removeNameAt);
+    }
+
     drawWheel();
 }
 
-// Function to handle removing a name at any specific index position
 function removeNameAt(index) {
     if (index > -1 && index < names.length) {
         names.splice(index, 1);
@@ -153,7 +155,6 @@ spinBtn.addEventListener('click', () => {
     requestAnimationFrame(animateWheel);
 });
 
-// Close popup modal window and clean out the winner
 closeModal.addEventListener('click', () => {
     if (lastWinnerIndex > -1 && lastWinnerIndex < names.length) {
         names.splice(lastWinnerIndex, 1);
@@ -163,5 +164,4 @@ closeModal.addEventListener('click', () => {
     lastWinnerIndex = -1; 
 });
 
-// Initial bootstrapper call
 syncNamesList();
