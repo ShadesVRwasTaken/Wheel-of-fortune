@@ -8,7 +8,6 @@ const resultModal = document.getElementById('resultModal');
 const winnerText = document.getElementById('winnerText');
 const closeModal = document.getElementById('closeModal');
 
-// Verified hard-reset state array workspace
 let names = []; 
 let currentRotationAngle = 0;
 let isSpinning = false;
@@ -23,14 +22,32 @@ function syncNamesList() {
         namesContainer.innerHTML = '<div style="color: #64748b; padding: 10px; text-align: center; font-size: 0.9rem;">No names added yet.</div>';
     }
 
-    names.forEach((name, index) => {
-        const item = document.createElement('div');
-        item.className = 'name-item';
-        item.innerHTML = `
-            <span>${name}</span>
-            <button class="remove-btn" data-index="${index}">✕</button>
+    names.forEach((item, index) => {
+        const domItem = document.createElement('div');
+        domItem.className = 'name-item';
+        domItem.innerHTML = `
+            <span>${item.name} (${item.weight}x)</span>
+            <div class="item-controls">
+                <button class="odds-up-btn" data-index="${index}">+ Up</button>
+                <button class="odds-down-btn" data-index="${index}" style="background: #e11d48; color: #fff; border:none; padding:2px 8px; border-radius:4px; font-size:0.8rem; font-weight:bold; cursor:pointer;">- Down</button>
+                <button class="remove-btn" data-index="${index}">✕</button>
+            </div>
         `;
-        namesContainer.appendChild(item);
+        namesContainer.appendChild(domItem);
+    });
+
+    document.querySelectorAll('.odds-up-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const idx = parseInt(e.target.getAttribute('data-index'));
+            upOddsAt(idx);
+        });
+    });
+
+    document.querySelectorAll('.odds-down-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const idx = parseInt(e.target.getAttribute('data-index'));
+            downOddsAt(idx);
+        });
     });
 
     document.querySelectorAll('.remove-btn').forEach(btn => {
@@ -40,12 +57,31 @@ function syncNamesList() {
         });
     });
 
-    // Simultaneously updates mathematical profiles tracking on Tab 2 data sets
     if (typeof updateOddsTable === 'function') {
-        updateOddsTable(names, removeNameAt);
+        updateOddsTable(names, upOddsAt, downOddsAt, removeNameAt);
     }
 
     drawWheel();
+}
+
+function upOddsAt(index) {
+    if (index > -1 && index < names.length) {
+        names[index].weight += 1;
+        if (typeof updateEarnings === 'function') updateEarnings(0.50);
+        syncNamesList();
+    }
+}
+
+// Lowers individual odds ticket allocation metrics and deducts money from ledger balances
+function downOddsAt(index) {
+    if (index > -1 && index < names.length) {
+        // Prevents odds from falling below 1 ticket
+        if (names[index].weight > 1) {
+            names[index].weight -= 1;
+            if (typeof updateEarnings === 'function') updateEarnings(-0.50);
+            syncNamesList();
+        }
+    }
 }
 
 function removeNameAt(index) {
@@ -74,10 +110,11 @@ function drawWheel() {
         return;
     }
 
-    const sliceAngle = (2 * Math.PI) / names.length;
+    const totalTickets = names.reduce((sum, item) => sum + item.weight, 0);
+    let startAngle = currentRotationAngle;
 
-    names.forEach((name, i) => {
-        const startAngle = currentRotationAngle + (i * sliceAngle);
+    names.forEach((item, i) => {
+        const sliceAngle = (item.weight / totalTickets) * (2 * Math.PI);
         const endAngle = startAngle + sliceAngle;
 
         ctx.beginPath();
@@ -99,18 +136,20 @@ function drawWheel() {
         ctx.fillStyle = (wheelColors[i % wheelColors.length] === '#000000' || wheelColors[i % wheelColors.length] === '#171717') ? '#22c55e' : '#ffffff';
         ctx.font = 'bold 15px sans-serif';
         
-        let renderText = name;
+        let renderText = item.name;
         if (renderText.length > 12) renderText = renderText.substring(0, 10) + '...';
         
         ctx.fillText(renderText, radius - 25, 5);
         ctx.restore();
+
+        startAngle = endAngle;
     });
 }
 
 addNameBtn.addEventListener('click', () => {
     const textValue = newNameInput.value.trim();
     if (textValue) {
-        names.push(textValue);
+        names.push({ name: textValue, weight: 1 });
         newNameInput.value = '';
         syncNamesList();
         if (typeof updateEarnings === 'function') updateEarnings(0.50);
@@ -125,11 +164,28 @@ spinBtn.addEventListener('click', () => {
     if (isSpinning || names.length === 0) return;
     isSpinning = true;
 
-    const totalSlices = names.length;
-    lastWinnerIndex = Math.floor(Math.random() * totalSlices);
-    const sliceSizeRad = (2 * Math.PI) / totalSlices;
+    const totalTickets = names.reduce((sum, item) => sum + item.weight, 0);
+    const randomTicketPoint = Math.random() * totalTickets;
     
-    const targetAngleOffset = (3 * Math.PI / 2) - (lastWinnerIndex * sliceSizeRad) - (sliceSizeRad / 2);
+    let ticketAccumulator = 0;
+    lastWinnerIndex = 0;
+    
+    for (let i = 0; i < names.length; i++) {
+        ticketAccumulator += names[i].weight;
+        if (randomTicketPoint <= ticketAccumulator) {
+            lastWinnerIndex = i;
+            break;
+        }
+    }
+
+    let precedingArcSum = 0;
+    for (let i = 0; i < lastWinnerIndex; i++) {
+        precedingArcSum += names[i].weight;
+    }
+    const winnerSliceAngleSize = (names[lastWinnerIndex].weight / totalTickets) * (2 * Math.PI);
+    const winnerStartAngleOffset = (precedingArcSum / totalTickets) * (2 * Math.PI);
+
+    const targetAngleOffset = (3 * Math.PI / 2) - winnerStartAngleOffset - (winnerSliceAngleSize / 2);
     const finalDestinationAngle = (Math.PI * 2 * 6) + targetAngleOffset;
 
     let startTimestamp = null;
@@ -148,7 +204,7 @@ spinBtn.addEventListener('click', () => {
             requestAnimationFrame(animateWheel);
         } else {
             isSpinning = false;
-            winnerText.textContent = names[lastWinnerIndex];
+            winnerText.textContent = names[lastWinnerIndex].name;
             resultModal.style.display = 'flex';
         }
     }

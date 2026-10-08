@@ -12,42 +12,61 @@ function updateEarnings(amount) {
     prizePoolDisplay.textContent = `$${halfEarnings.toFixed(2)}`;
 }
 
-// Generates structural percentage values grid matrix dynamically
-function updateOddsTable(namesArray, deleteCallback) {
+// Generates structural percentage values grid matrix dynamically based on entry weights
+function updateOddsTable(namesArray, upOddsCallback, downOddsCallback, deleteCallback) {
     oddsTableBody.innerHTML = '';
 
     if (namesArray.length === 0) {
         oddsTableBody.innerHTML = `
             <tr>
-                <td colspan="3" style="text-align: center; color: #64748b; padding: 20px;">
+                <td colspan="4" style="text-align: center; color: #64748b; padding: 20px;">
                     No entries active to compute odds profile configurations.
                 </td>
             </tr>`;
         return;
     }
 
-    // Every slice has an exactly equal statistical percentage probability layout distribution profile
-    const individualPercentage = (100 / namesArray.length).toFixed(1);
+    const totalTickets = namesArray.reduce((sum, item) => sum + item.weight, 0);
 
-    namesArray.forEach((name, index) => {
+    namesArray.forEach((item, index) => {
+        const individualPercentage = totalTickets > 0 ? ((item.weight / totalTickets) * 100).toFixed(1) : "0.0";
         const row = document.createElement('tr');
         
         row.innerHTML = `
-            <td style="font-weight: 600;">${name}</td>
+            <td style="font-weight: 600;">${item.name}</td>
+            <td style="color: #fff; font-weight: bold;">${item.weight}</td>
             <td style="color: var(--accent); font-weight: bold;">${individualPercentage}%</td>
-            <td><button class="table-remove-btn" data-idx="${index}">Erase</button></td>
+            <td>
+                <div class="table-btn-group">
+                    <button class="table-odds-up-btn" data-idx="${index}" style="background: var(--accent); color:#000; border:none; padding:4px 10px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.85rem;">+ Up Odds</button>
+                    <button class="table-odds-down-btn" data-idx="${index}" style="background: #e11d48; color:#fff; border:none; padding:4px 10px; border-radius:6px; cursor:pointer; font-weight:bold; font-size:0.85rem;">- Down Odds</button>
+                    <button class="table-remove-btn" data-idx="${index}">Erase</button>
+                </div>
+            </td>
         `;
         
         oddsTableBody.appendChild(row);
     });
 
-    // Wire up delete event hooks directly inside the dashboard grid views framework row item buttons
+    // Wire up event listeners
+    document.querySelectorAll('.table-odds-up-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const targetIdx = parseInt(e.target.getAttribute('data-idx'));
+            if (typeof upOddsCallback === 'function') upOddsCallback(targetIdx);
+        });
+    });
+
+    document.querySelectorAll('.table-odds-down-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            const targetIdx = parseInt(e.target.getAttribute('data-idx'));
+            if (typeof downOddsCallback === 'function') downOddsCallback(targetIdx);
+        });
+    });
+
     document.querySelectorAll('.table-remove-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             const targetIdx = parseInt(e.target.getAttribute('data-idx'));
-            if (typeof deleteCallback === 'function') {
-                deleteCallback(targetIdx);
-            }
+            if (typeof deleteCallback === 'function') deleteCallback(targetIdx);
         });
     });
 }
